@@ -33,13 +33,19 @@
       </div>
       
       <div class="flex items-center space-x-2">
+        <!-- Firebase Sync Status / Config Button -->
+        <button id="open-firebase-btn" class="flex items-center space-x-1 bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs px-3 py-2 rounded-lg font-medium border border-slate-700 transition" title="Cloud Sync">
+          <i id="cloud-icon" data-lucide="cloud-off" class="w-4 h-4 text-slate-400"></i>
+          <span id="cloud-status-text" class="hidden md:inline">Cloud Sync</span>
+        </button>
+
         <!-- Analytics Modal Toggle -->
         <button id="open-analytics-btn" class="flex items-center space-x-1 bg-indigo-700 hover:bg-indigo-600 text-white text-xs px-3 py-2 rounded-lg font-medium shadow transition">
           <i data-lucide="pie-chart" class="w-4 h-4"></i>
           <span class="hidden sm:inline">Analytics</span>
         </button>
 
-        <!-- Install PWA Button (hidden by default until install event triggers) -->
+        <!-- Install PWA Button -->
         <button id="pwa-install-btn" class="hidden items-center space-x-1 bg-emerald-600 hover:bg-emerald-700 text-white text-xs px-3 py-2 rounded-lg font-medium shadow transition">
           <i data-lucide="download" class="w-4 h-4"></i>
           <span class="hidden sm:inline">Install App</span>
@@ -207,6 +213,56 @@
     </div>
   </main>
 
+  <!-- Modal: Firebase Config & Cloud Sync -->
+  <div id="firebase-modal" class="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-xs hidden flex items-center justify-center p-4 overflow-y-auto">
+    <div class="bg-white rounded-xl shadow-xl max-w-lg w-full p-6 relative my-8">
+      <button id="close-firebase-modal" class="absolute top-4 right-4 text-slate-400 hover:text-slate-600">
+        <i data-lucide="x" class="w-5 h-5"></i>
+      </button>
+      
+      <div class="flex items-center space-x-2 mb-1">
+        <i data-lucide="cloud" class="w-5 h-5 text-indigo-600"></i>
+        <h2 class="text-lg font-bold text-slate-900">Cloud Sync (Firebase Firestore)</h2>
+      </div>
+      <p class="text-xs text-slate-500 mb-4">Paste your free Firebase project details below to automatically synchronize data across all your phones, tablets, and computers in real-time.</p>
+
+      <form id="firebase-config-form" class="space-y-3 text-xs">
+        <div>
+          <label class="block font-medium text-slate-700 mb-1">API Key *</label>
+          <input type="text" id="fb-apiKey" required placeholder="AIzaSy..." class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+        </div>
+        <div>
+          <label class="block font-medium text-slate-700 mb-1">Auth Domain</label>
+          <input type="text" id="fb-authDomain" placeholder="your-app.firebaseapp.com" class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+        </div>
+        <div>
+          <label class="block font-medium text-slate-700 mb-1">Project ID *</label>
+          <input type="text" id="fb-projectId" required placeholder="your-app-id" class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+        </div>
+        <div>
+          <label class="block font-medium text-slate-700 mb-1">Storage Bucket</label>
+          <input type="text" id="fb-storageBucket" placeholder="your-app.appspot.com" class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+        </div>
+        <div>
+          <label class="block font-medium text-slate-700 mb-1">Messaging Sender ID</label>
+          <input type="text" id="fb-messagingSenderId" placeholder="1234567890" class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+        </div>
+        <div>
+          <label class="block font-medium text-slate-700 mb-1">App ID *</label>
+          <input type="text" id="fb-appId" required placeholder="1:1234567890:web:abcdef..." class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+        </div>
+
+        <div class="flex justify-between items-center pt-4 border-t border-slate-200">
+          <button type="button" id="disconnect-firebase-btn" class="px-3 py-2 text-rose-600 hover:bg-rose-50 rounded-lg font-medium hidden">Disconnect Cloud</button>
+          <div class="flex space-x-2 ml-auto">
+            <button type="button" id="cancel-firebase-modal" class="px-4 py-2 font-medium text-slate-600">Cancel</button>
+            <button type="submit" class="px-4 py-2 font-semibold bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 shadow">Save & Connect Database</button>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+
   <!-- Modal: Full Analytics Breakdowns -->
   <div id="analytics-modal" class="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-xs hidden flex items-center justify-center p-4 overflow-y-auto">
     <div class="bg-white rounded-xl shadow-xl max-w-3xl w-full p-6 relative my-8">
@@ -218,7 +274,6 @@
       <p class="text-xs text-slate-500 mb-6">Detailed revenue, profit, margin, and volume analysis by source location and platform.</p>
 
       <div class="space-y-6">
-        <!-- Breakdown by Sourced Location -->
         <div>
           <h3 class="text-xs font-bold text-slate-800 uppercase tracking-wider mb-3 flex items-center space-x-1">
             <i data-lucide="map-pin" class="w-4 h-4 text-indigo-600"></i>
@@ -235,14 +290,11 @@
                   <th class="py-2.5 px-3">Avg Margin</th>
                 </tr>
               </thead>
-              <tbody id="modal-location-tbody" class="divide-y divide-slate-100">
-                <!-- Dynamic Location Analytics Rows -->
-              </tbody>
+              <tbody id="modal-location-tbody" class="divide-y divide-slate-100"></tbody>
             </table>
           </div>
         </div>
 
-        <!-- Breakdown by Platform -->
         <div>
           <h3 class="text-xs font-bold text-slate-800 uppercase tracking-wider mb-3 flex items-center space-x-1">
             <i data-lucide="store" class="w-4 h-4 text-purple-600"></i>
@@ -259,9 +311,7 @@
                   <th class="py-2.5 px-3">Avg Margin</th>
                 </tr>
               </thead>
-              <tbody id="modal-platform-tbody" class="divide-y divide-slate-100">
-                <!-- Dynamic Platform Analytics Rows -->
-              </tbody>
+              <tbody id="modal-platform-tbody" class="divide-y divide-slate-100"></tbody>
             </table>
           </div>
         </div>
@@ -440,9 +490,20 @@
     </div>
   </div>
 
-  <script>
+  <!-- MODULE SCRIPT FOR FIREBASE AND APP LOGIC -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
+    import { 
+      getFirestore, 
+      collection, 
+      doc, 
+      setDoc, 
+      deleteDoc, 
+      onSnapshot 
+    } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js";
+
     /* --------------------------------------------------
-     * 1. INDEXEDDB IMPLEMENTATION FOR OFFLINE STORAGE
+     * 1. INDEXEDDB IMPLEMENTATION FOR LOCAL STORAGE
      * -------------------------------------------------- */
     const DB_NAME = 'ProfitPulsePWA_DB';
     const DB_VERSION = 2;
@@ -497,19 +558,104 @@
       });
     }
 
-    function clearAndBulkSaveDB(items) {
+    function clearAndBulkSaveDB(newItems) {
       return new Promise((resolve, reject) => {
         const transaction = db.transaction([STORE_NAME], 'readwrite');
         const store = transaction.objectStore(STORE_NAME);
         store.clear().onsuccess = () => {
-          items.forEach(item => store.put(item));
+          newItems.forEach(item => store.put(item));
           resolve();
         };
       });
     }
 
     /* --------------------------------------------------
-     * 2. DYNAMIC PWA SERVICE WORKER & MANIFEST INJECTION
+     * 2. FIREBASE FIRESTORE SYNC LOGIC
+     * -------------------------------------------------- */
+    let firestoreDB = null;
+    let unsubscribeFirestore = null;
+
+    function initFirebase() {
+      const savedConfigStr = localStorage.getItem('profitpulse_firebase_config');
+      if (!savedConfigStr) {
+        updateCloudStatusUI(false);
+        return;
+      }
+
+      try {
+        const config = JSON.parse(savedConfigStr);
+        const app = initializeApp(config);
+        firestoreDB = getFirestore(app);
+
+        // Pre-fill modal input fields
+        document.getElementById('fb-apiKey').value = config.apiKey || '';
+        document.getElementById('fb-authDomain').value = config.authDomain || '';
+        document.getElementById('fb-projectId').value = config.projectId || '';
+        document.getElementById('fb-storageBucket').value = config.storageBucket || '';
+        document.getElementById('fb-messagingSenderId').value = config.messagingSenderId || '';
+        document.getElementById('fb-appId').value = config.appId || '';
+        document.getElementById('disconnect-firebase-btn').classList.remove('hidden');
+
+        // Subscribe to real-time updates
+        const colRef = collection(firestoreDB, 'inventory');
+        unsubscribeFirestore = onSnapshot(colRef, async (snapshot) => {
+          const remoteItems = [];
+          snapshot.forEach((doc) => {
+            remoteItems.push(doc.data());
+          });
+
+          if (remoteItems.length > 0) {
+            items = remoteItems;
+            await clearAndBulkSaveDB(items);
+            renderApp();
+          }
+        }, (error) => {
+          console.error("Firestore sync error:", error);
+          updateCloudStatusUI(false);
+        });
+
+        updateCloudStatusUI(true);
+      } catch (err) {
+        console.error("Error initializing Firebase:", err);
+        updateCloudStatusUI(false);
+      }
+    }
+
+    function updateCloudStatusUI(isConnected) {
+      const icon = document.getElementById('cloud-icon');
+      const text = document.getElementById('cloud-status-text');
+      if (isConnected) {
+        icon.setAttribute('data-lucide', 'cloud');
+        icon.className = 'w-4 h-4 text-emerald-400';
+        text.textContent = 'Cloud Active';
+      } else {
+        icon.setAttribute('data-lucide', 'cloud-off');
+        icon.className = 'w-4 h-4 text-slate-400';
+        text.textContent = 'Cloud Offline';
+      }
+      lucide.createIcons();
+    }
+
+    async function syncSaveToCloud(item) {
+      if (!firestoreDB) return;
+      try {
+        await setDoc(doc(firestoreDB, 'inventory', item.id), item);
+      } catch (err) {
+        console.error("Failed to sync save to cloud:", err);
+      }
+    }
+
+    async function syncDeleteToCloud(id) {
+      if (!firestoreDB) return;
+      try {
+        await deleteDoc(doc(firestoreDB, 'inventory', id));
+      } catch (err) {
+        console.error("Failed to sync delete to cloud:", err);
+      }
+    }
+
+    /* --------------------------------------------------
+     * 3. DYNAMIC PWA SERVICE WORKER & MANIFEST INJECTION
      * -------------------------------------------------- */
     (function setupPWA() {
       const manifest = {
@@ -539,7 +685,7 @@
 
       if ('serviceWorker' in navigator) {
         const swCode = `
-          const CACHE_NAME = 'profitpulse-v2';
+          const CACHE_NAME = 'profitpulse-v3';
           self.addEventListener('install', (e) => { self.skipWaiting(); });
           self.addEventListener('activate', (e) => { e.waitUntil(clients.claim()); });
           self.addEventListener('fetch', (e) => {
@@ -553,7 +699,7 @@
     })();
 
     /* --------------------------------------------------
-     * 3. APP STATE & CALCULATIONS
+     * 4. APP STATE & CALCULATIONS
      * -------------------------------------------------- */
     let items = [];
     let currentFilter = 'all';
@@ -596,7 +742,7 @@
     }
 
     /* --------------------------------------------------
-     * 4. UI RENDERING LOGIC & ANALYTICS
+     * 5. UI RENDERING LOGIC & ANALYTICS
      * -------------------------------------------------- */
     function renderApp() {
       renderSummary();
@@ -646,7 +792,6 @@
         const loc = item.sourcedLocation ? item.sourcedLocation.trim() : 'Unspecified';
         const platform = item.platformPreset ? item.platformPreset.toUpperCase() : 'CUSTOM';
 
-        // Location accumulator
         if (!locStats[loc]) {
           locStats[loc] = { revenue: 0, profit: 0, count: 0 };
         }
@@ -654,7 +799,6 @@
         locStats[loc].profit += m.netProfit;
         locStats[loc].count += 1;
 
-        // Platform accumulator
         if (!platformStats[platform]) {
           platformStats[platform] = { revenue: 0, profit: 0, count: 0 };
         }
@@ -663,11 +807,9 @@
         platformStats[platform].count += 1;
       });
 
-      // Render Summary Widgets
       renderWidgetList('summary-location-list', locStats);
       renderWidgetList('summary-platform-list', platformStats);
 
-      // Render Modal Analytics Tables
       renderModalTable('modal-location-tbody', locStats);
       renderModalTable('modal-platform-tbody', platformStats);
     }
@@ -683,7 +825,6 @@
 
       container.innerHTML = keys.slice(0, 4).map(key => {
         const stat = statsObj[key];
-        const margin = stat.revenue > 0 ? ((stat.profit / stat.revenue) * 100).toFixed(1) : '0.0';
         return `
           <div class="flex items-center justify-between py-1 border-b border-slate-200/50 last:border-0">
             <div>
@@ -843,13 +984,46 @@
     }
 
     /* --------------------------------------------------
-     * 5. EVENT HANDLERS & MODAL MANAGEMENT
+     * 6. EVENT HANDLERS & MODAL MANAGEMENT
      * -------------------------------------------------- */
     const itemModal = document.getElementById('item-modal');
     const itemForm = document.getElementById('item-form');
     const quickSoldModal = document.getElementById('quick-sold-modal');
     const backupModal = document.getElementById('backup-modal');
     const analyticsModal = document.getElementById('analytics-modal');
+    const firebaseModal = document.getElementById('firebase-modal');
+
+    // Firebase Modal Controls
+    document.getElementById('open-firebase-btn').addEventListener('click', () => firebaseModal.classList.remove('hidden'));
+    document.getElementById('close-firebase-modal').addEventListener('click', () => firebaseModal.classList.add('hidden'));
+    document.getElementById('cancel-firebase-modal').addEventListener('click', () => firebaseModal.classList.add('hidden'));
+
+    document.getElementById('firebase-config-form').addEventListener('submit', (e) => {
+      e.preventDefault();
+      const config = {
+        apiKey: document.getElementById('fb-apiKey').value.trim(),
+        authDomain: document.getElementById('fb-authDomain').value.trim(),
+        projectId: document.getElementById('fb-projectId').value.trim(),
+        storageBucket: document.getElementById('fb-storageBucket').value.trim(),
+        messagingSenderId: document.getElementById('fb-messagingSenderId').value.trim(),
+        appId: document.getElementById('fb-appId').value.trim()
+      };
+
+      localStorage.setItem('profitpulse_firebase_config', JSON.stringify(config));
+      firebaseModal.classList.add('hidden');
+      initFirebase();
+    });
+
+    document.getElementById('disconnect-firebase-btn').addEventListener('click', () => {
+      if (confirm('Disconnect Firebase cloud sync on this device?')) {
+        localStorage.removeItem('profitpulse_firebase_config');
+        if (unsubscribeFirestore) unsubscribeFirestore();
+        firestoreDB = null;
+        updateCloudStatusUI(false);
+        document.getElementById('disconnect-firebase-btn').classList.add('hidden');
+        firebaseModal.classList.add('hidden');
+      }
+    });
 
     // Analytics Modal Controls
     document.getElementById('open-analytics-btn').addEventListener('click', () => analyticsModal.classList.remove('hidden'));
@@ -906,6 +1080,8 @@
       };
 
       await saveItemDB(newItem);
+      await syncSaveToCloud(newItem);
+
       const idx = items.findIndex(i => i.id === id);
       if (idx >= 0) items[idx] = newItem;
       else items.unshift(newItem);
@@ -944,6 +1120,7 @@
     window.deleteItem = async function(id) {
       if (confirm('Are you sure you want to delete this item?')) {
         await deleteItemDB(id);
+        await syncDeleteToCloud(id);
         items = items.filter(i => i.id !== id);
         renderApp();
       }
@@ -974,6 +1151,7 @@
       item.outboundShipping = parseFloat(document.getElementById('quick-outbound-shipping').value) || 0;
 
       await saveItemDB(item);
+      await syncSaveToCloud(item);
       quickSoldModal.classList.add('hidden');
       renderApp();
     });
@@ -1063,9 +1241,17 @@
           if (Array.isArray(imported)) {
             await clearAndBulkSaveDB(imported);
             items = imported;
+            
+            // Sync imported records to cloud if connected
+            if (firestoreDB) {
+              for (const item of items) {
+                await syncSaveToCloud(item);
+              }
+            }
+
             renderApp();
             backupModal.classList.add('hidden');
-            alert('Inventory restored successfully!');
+            alert('Inventory restored and synced successfully!');
           }
         } catch (err) {
           alert('Invalid JSON file format.');
@@ -1098,6 +1284,8 @@
     window.onload = async () => {
       await initDB();
       items = await getAllItemsDB();
+
+      initFirebase();
 
       // Seed dummy items if empty on first launch
       if (items.length === 0) {
