@@ -118,6 +118,7 @@
         <table class="w-full text-left text-sm">
           <thead class="bg-slate-50 border-b border-slate-200 text-xs font-semibold text-slate-500 uppercase tracking-wider">
             <tr>
+              <th class="py-3 px-4 w-16">Photo</th>
               <th class="py-3 px-4">Brand</th>
               <th class="py-3 px-4">Item</th>
               <th class="py-3 px-4">Location</th>
@@ -204,6 +205,31 @@
 
       <form id="item-form" class="space-y-4">
         <input type="hidden" id="item-id">
+        <input type="hidden" id="form-image-base64">
+
+        <!-- Image Upload Field -->
+        <div>
+          <label class="block text-xs font-medium text-slate-700 mb-1">Item Photo</label>
+          <div class="flex items-center space-x-4">
+            <div id="image-preview-container" class="w-16 h-16 bg-slate-100 rounded-lg border border-slate-200 flex items-center justify-center overflow-hidden shrink-0">
+              <i id="image-placeholder-icon" data-lucide="image" class="w-6 h-6 text-slate-400"></i>
+              <img id="image-preview" src="" alt="Preview" class="hidden w-full h-full object-cover">
+            </div>
+            <div class="flex-1 space-y-2">
+              <input type="file" id="form-image-input" accept="image/*" class="hidden">
+              <div class="flex space-x-2">
+                <button type="button" id="upload-image-btn" class="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-medium rounded-lg border border-slate-300 transition flex items-center space-x-1">
+                  <i data-lucide="camera" class="w-3.5 h-3.5"></i>
+                  <span>Upload Photo</span>
+                </button>
+                <button type="button" id="remove-image-btn" class="hidden px-3 py-1.5 bg-rose-50 hover:bg-rose-100 text-rose-600 text-xs font-medium rounded-lg border border-rose-200 transition">
+                  Remove
+                </button>
+              </div>
+              <p class="text-[11px] text-slate-400">JPG, PNG, or WEBP up to 5MB.</p>
+            </div>
+          </div>
+        </div>
 
         <div>
           <label class="block text-xs font-medium text-slate-700 mb-1">Brand *</label>
@@ -470,7 +496,7 @@
 
       if ('serviceWorker' in navigator) {
         const swCode = `
-          const CACHE_NAME = 'simple-inventory-v1';
+          const CACHE_NAME = 'simple-inventory-v2';
           self.addEventListener('install', (e) => { self.skipWaiting(); });
           self.addEventListener('activate', (e) => { e.waitUntil(clients.claim()); });
           self.addEventListener('fetch', (e) => {
@@ -550,7 +576,14 @@
         const tr = document.createElement('tr');
         tr.className = "hover:bg-slate-50 transition border-b border-slate-100";
 
+        const imageHTML = entry.image 
+          ? `<img src="${entry.image}" alt="${escapeHTML(entry.item)}" class="w-10 h-10 object-cover rounded-lg border border-slate-200">`
+          : `<div class="w-10 h-10 bg-slate-100 rounded-lg border border-slate-200 flex items-center justify-center text-slate-400"><i data-lucide="image" class="w-5 h-5"></i></div>`;
+
         tr.innerHTML = `
+          <td class="py-3 px-4">
+            ${imageHTML}
+          </td>
           <td class="py-3 px-4 font-semibold text-slate-900">
             ${escapeHTML(entry.brand)}
           </td>
@@ -586,7 +619,56 @@
     }
 
     /* --------------------------------------------------
-     * 5. EVENT HANDLERS & MODALS
+     * 5. IMAGE HANDLING HELPERS
+     * -------------------------------------------------- */
+    function setImagePreview(base64Str) {
+      const previewImg = document.getElementById('image-preview');
+      const placeholderIcon = document.getElementById('image-placeholder-icon');
+      const removeBtn = document.getElementById('remove-image-btn');
+      const hiddenInput = document.getElementById('form-image-base64');
+
+      hiddenInput.value = base64Str || '';
+
+      if (base64Str) {
+        previewImg.src = base64Str;
+        previewImg.classList.remove('hidden');
+        placeholderIcon.classList.add('hidden');
+        removeBtn.classList.remove('hidden');
+      } else {
+        previewImg.src = '';
+        previewImg.classList.add('hidden');
+        placeholderIcon.classList.remove('hidden');
+        removeBtn.classList.add('hidden');
+      }
+    }
+
+    document.getElementById('upload-image-btn').addEventListener('click', () => {
+      document.getElementById('form-image-input').click();
+    });
+
+    document.getElementById('form-image-input').addEventListener('change', (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+
+      if (file.size > 5 * 1024 * 1024) {
+        alert('Image file size must be less than 5MB.');
+        return;
+      }
+
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        setImagePreview(event.target.result);
+      };
+      reader.readAsDataURL(file);
+    });
+
+    document.getElementById('remove-image-btn').addEventListener('click', () => {
+      document.getElementById('form-image-input').value = '';
+      setImagePreview('');
+    });
+
+    /* --------------------------------------------------
+     * 6. EVENT HANDLERS & MODALS
      * -------------------------------------------------- */
     const itemModal = document.getElementById('item-modal');
     const itemForm = document.getElementById('item-form');
@@ -627,6 +709,7 @@
     document.getElementById('add-item-btn').addEventListener('click', () => {
       itemForm.reset();
       document.getElementById('item-id').value = '';
+      setImagePreview('');
       document.getElementById('modal-title').textContent = 'Add Item';
       itemModal.classList.remove('hidden');
     });
@@ -646,6 +729,7 @@
         location: document.getElementById('form-location').value.trim(),
         cost: parseFloat(document.getElementById('form-cost').value) || 0,
         notes: document.getElementById('form-notes').value.trim(),
+        image: document.getElementById('form-image-base64').value || '',
         createdAt: existing ? existing.createdAt : new Date().toISOString()
       };
 
@@ -670,6 +754,7 @@
       document.getElementById('form-location').value = entry.location || '';
       document.getElementById('form-cost').value = entry.cost || '';
       document.getElementById('form-notes').value = entry.notes || '';
+      setImagePreview(entry.image || '');
 
       document.getElementById('modal-title').textContent = 'Edit Item';
       itemModal.classList.remove('hidden');
@@ -794,6 +879,7 @@
             location: 'Bin 4 - Goodwill',
             cost: 15.00,
             notes: 'Dark wash size L, minor wear',
+            image: '',
             createdAt: new Date(Date.now() - 86400000 * 3).toISOString()
           },
           {
@@ -803,6 +889,7 @@
             location: 'Shelf 2',
             cost: 32.00,
             notes: 'Unopened box',
+            image: '',
             createdAt: new Date().toISOString()
           }
         ];
